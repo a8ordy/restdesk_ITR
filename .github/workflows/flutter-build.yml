@@ -3,7 +3,14 @@
 name: Build the flutter version of the RustDesk
 
 on:
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      upload-artifact:
+        type: boolean
+        default: true
+      upload-tag:
+        type: string
+        default: "nightly"
 
 env:
   CARGO_NDK_VERSION: '3.1.2'
