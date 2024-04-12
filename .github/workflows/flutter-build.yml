@@ -1,30 +1,32 @@
-name: Build the flutter version of the RustDesk 
+# @format
+
+name: Build the flutter version of the RustDesk
 
 on:
   workflow_dispatch:
 
 env:
-  CARGO_NDK_VERSION: "3.1.2"
-  LLVM_VERSION: "15.0.6"
-  FLUTTER_VERSION: "3.10.6"
-  FLUTTER_RUST_BRIDGE_VERSION: "1.75.3"
+  CARGO_NDK_VERSION: '3.1.2'
+  LLVM_VERSION: '15.0.6'
+  FLUTTER_VERSION: '3.10.6'
+  FLUTTER_RUST_BRIDGE_VERSION: '1.75.3'
   # for arm64 linux
-  FLUTTER_ELINUX_VERSION: "3.10.6"
-  FLUTTER_ELINUX_COMMIT_ID: "410b3ca42f2cd0c485edf517a1666652bab442d4"
-  TAG_NAME: "1.2.3-2"
+  FLUTTER_ELINUX_VERSION: '3.10.6'
+  FLUTTER_ELINUX_COMMIT_ID: '410b3ca42f2cd0c485edf517a1666652bab442d4'
+  TAG_NAME: '1.2.3-2'
   # vcpkg version: 2023.04.15
   # for multiarch gcc compatibility
-  VCPKG_COMMIT_ID: "501db0f17ef6df184fcdbfbe0f87cde2313b6ab1"
-  VERSION: "1.2.3-2"
-  NDK_VERSION: "r25c"
+  VCPKG_COMMIT_ID: '501db0f17ef6df184fcdbfbe0f87cde2313b6ab1'
+  VERSION: '1.2.3-2'
+  NDK_VERSION: 'r25c'
   #signing keys env variable checks
   ANDROID_SIGNING_KEY: '${{ secrets.ANDROID_SIGNING_KEY }}'
   MACOS_P12_BASE64: '${{ secrets.MACOS_P12_BASE64 }}'
   # To make a custom build with your own servers set the below secret values
   RS_PUB_KEY: '${{ secrets.RS_PUB_KEY }}'
   RENDEZVOUS_SERVER: '${{ secrets.RENDEZVOUS_SERVER }}'
-  UPLOAD_ARTIFACT: "${{ inputs.upload-artifact }}"
-  SIGN_BASE_URL: "${{ secrets.SIGN_BASE_URL }}"
+  UPLOAD_ARTIFACT: '${{ inputs.upload-artifact }}'
+  SIGN_BASE_URL: '${{ secrets.SIGN_BASE_URL }}'
 
 jobs:
   build-for-windows-flutter:
@@ -50,7 +52,7 @@ jobs:
       - name: Install flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: "stable"
+          channel: 'stable'
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
@@ -65,10 +67,10 @@ jobs:
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: "1.75"
+          toolchain: '1.75'
           target: ${{ matrix.job.target }}
           override: true
-          components: "rustfmt"
+          components: 'rustfmt'
 
       - uses: Swatinem/rust-cache@v2
         with:
@@ -84,8 +86,8 @@ jobs:
       - name: Install vcpkg dependencies
         run: |
           cd C:\
-          git clone https://github.com/Kingtous/rustdesk_thirdpary_lib --depth=1 
-          
+          git clone https://github.com/Kingtous/rustdesk_thirdpary_lib --depth=1
+
       - name: Build rustdesk
         env:
           VCPKG_ROOT: C:\rustdesk_thirdpary_lib\vcpkg
@@ -111,8 +113,8 @@ jobs:
         if: env.UPLOAD_ARTIFACT == 'true' && env.SIGN_BASE_URL != ''
         shell: bash
         run: |
-           pip3 install requests argparse
-           BASE_URL=${{ secrets.SIGN_BASE_URL }} SECRET_KEY=${{ secrets.SIGN_SECRET_KEY }} python3 res/job.py sign_files ./flutter/build/windows/runner/Release/
+          pip3 install requests argparse
+          BASE_URL=${{ secrets.SIGN_BASE_URL }} SECRET_KEY=${{ secrets.SIGN_SECRET_KEY }} python3 res/job.py sign_files ./flutter/build/windows/runner/Release/
 
       - name: Build self-extracted executable
         shell: bash
@@ -128,7 +130,7 @@ jobs:
         if: env.UPLOAD_ARTIFACT == 'true' && env.SIGN_BASE_URL != ''
         shell: bash
         run: |
-           BASE_URL=${{ secrets.SIGN_BASE_URL }} SECRET_KEY=${{ secrets.SIGN_SECRET_KEY }} python3 res/job.py sign_files ./SignOutput
+          BASE_URL=${{ secrets.SIGN_BASE_URL }} SECRET_KEY=${{ secrets.SIGN_SECRET_KEY }} python3 res/job.py sign_files ./SignOutput
 
       - name: Publish Release
         uses: softprops/action-gh-release@v1
@@ -145,7 +147,7 @@ jobs:
   #   name: ${{ matrix.job.target }} (${{ matrix.job.os }})
   #   runs-on: ${{ matrix.job.os }}
   #   # Temporarily disable this action due to additional test is needed.
-  #   # if: false 
+  #   # if: false
   #   strategy:
   #     fail-fast: false
   #     matrix:
@@ -184,7 +186,7 @@ jobs:
   #     - name: Install vcpkg dependencies
   #       run: |
   #         cd C:\
-  #         git clone https://github.com/Kingtous/rustdesk_thirdpary_lib --depth=1 
+  #         git clone https://github.com/Kingtous/rustdesk_thirdpary_lib --depth=1
 
   #     - name: Build rustdesk
   #       id: build
@@ -233,7 +235,7 @@ jobs:
   #         popd
   #         mkdir -p ./SignOutput
   #         mv ./target/release/rustdesk-portable-packer.exe ./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.exe
-      
+
   #     - name: Sign rustdesk self-extracted file
   #       if: env.UPLOAD_ARTIFACT == 'true' && env.SIGN_BASE_URL != ''
   #       shell: bash
@@ -269,11 +271,11 @@ jobs:
   #     - name: Import the codesign cert
   #       if: env.MACOS_P12_BASE64 != null
   #       uses: apple-actions/import-codesign-certs@v1
-  #       with: 
+  #       with:
   #         p12-file-base64: ${{ secrets.MACOS_P12_BASE64 }}
   #         p12-password: ${{ secrets.MACOS_P12_PASSWORD }}
   #         keychain: rustdesk
-      
+
   #     - name: Check sign and import sign key
   #       if: env.MACOS_P12_BASE64 != null
   #       run: |
@@ -288,11 +290,11 @@ jobs:
   #         fileName: rustdesk.json
   #         fileDir: ${{ github.workspace }}
   #         encodedString: ${{ secrets.MACOS_NOTARIZE_JSON }}
-          
+
   #     - name: Install rcodesign tool
   #       if: env.MACOS_P12_BASE64 != null
   #       shell: bash
-  #       run: | 
+  #       run: |
   #         pushd /tmp
   #         wget https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F0.22.0/apple-codesign-0.22.0-macos-universal.tar.gz
   #         tar -zxvf apple-codesign-0.22.0-macos-universal.tar.gz
@@ -388,255 +390,256 @@ jobs:
     uses: ./.github/workflows/bridge.yml
 
   # build-rustdesk-ios:
-    if: ${{ inputs.upload-artifact }}
-    needs: [generate-bridge-linux]
-    name: build rustdesk ios ipa ${{ matrix.job.target }} (${{ matrix.job.os }}) [${{ matrix.job.extra-build-features }}]
-    runs-on: ${{ matrix.job.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        job:
-          - {
-              arch: aarch64,
-              target: aarch64-apple-ios,
-              os: macos-latest,
-              extra-build-features: "",
-            }
-    steps:
-      - name: Install dependencies
-        run: |
-          brew install nasm yasm
-      - name: Checkout source code
-        uses: actions/checkout@v3
-      - name: Install flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: "stable"
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+  # if: ${{ inputs.upload-artifact }}
+  # needs: [generate-bridge-linux]
+  # name: build rustdesk ios ipa ${{ matrix.job.target }} (${{ matrix.job.os }}) [${{ matrix.job.extra-build-features }}]
+  # runs-on: ${{ matrix.job.os }}
+  # strategy:
+  #   fail-fast: false
+  #   matrix:
+  #     job:
+  #       - {
+  #           arch: aarch64,
+  #           target: aarch64-apple-ios,
+  #           os: macos-latest,
+  #           extra-build-features: "",
+  #         }
+  # steps:
+  #   - name: Install dependencies
+  #     run: |
+  #       brew install nasm yasm
+  #   - name: Checkout source code
+  #     uses: actions/checkout@v3
+  #   - name: Install flutter
+  #     uses: subosito/flutter-action@v2
+  #     with:
+  #       channel: "stable"
+  #       flutter-version: ${{ env.FLUTTER_VERSION }}
 
-      - name: Clone deps
-        shell: bash
-        run: |
-          pushd /opt
-          sudo git clone https://github.com/rustdesk-org/rustdesk_thirdparty_lib.git --depth=1
+  #   - name: Clone deps
+  #     shell: bash
+  #     run: |
+  #       pushd /opt
+  #       sudo git clone https://github.com/rustdesk-org/rustdesk_thirdparty_lib.git --depth=1
 
-      - name: Restore bridge files
-        uses: actions/download-artifact@master
-        with:
-          name: bridge-artifact
-          path: ./
+  #   - name: Restore bridge files
+  #     uses: actions/download-artifact@master
+  #     with:
+  #       name: bridge-artifact
+  #       path: ./
 
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: ${{ matrix.job.target }}
-          override: true
-          profile: minimal # minimal component installation (ie, no documentation)
+  #   - name: Install Rust toolchain
+  #     uses: actions-rs/toolchain@v1
+  #     with:
+  #       toolchain: stable
+  #       target: ${{ matrix.job.target }}
+  #       override: true
+  #       profile: minimal # minimal component installation (ie, no documentation)
 
-      - uses: Swatinem/rust-cache@v2
-        with:
-          prefix-key: rustdesk-lib-cache
-          key: ${{ matrix.job.target }}-${{ matrix.job.extra-build-features }}
+  #   - uses: Swatinem/rust-cache@v2
+  #     with:
+  #       prefix-key: rustdesk-lib-cache
+  #       key: ${{ matrix.job.target }}-${{ matrix.job.extra-build-features }}
 
-      - name: Install flutter rust bridge deps
-        shell: bash
-        run: |
-          cargo install flutter_rust_bridge_codegen --version ${{ env.FLUTTER_RUST_BRIDGE_VERSION }} --features "uuid"
-          pushd flutter && flutter pub get && popd
-          ~/.cargo/bin/flutter_rust_bridge_codegen --rust-input ./src/flutter_ffi.rs --dart-output ./flutter/lib/generated_bridge.dart --c-output ./flutter/ios/Runner/bridge_generated.h
+  #   - name: Install flutter rust bridge deps
+  #     shell: bash
+  #     run: |
+  #       cargo install flutter_rust_bridge_codegen --version ${{ env.FLUTTER_RUST_BRIDGE_VERSION }} --features "uuid"
+  #       pushd flutter && flutter pub get && popd
+  #       ~/.cargo/bin/flutter_rust_bridge_codegen --rust-input ./src/flutter_ffi.rs --dart-output ./flutter/lib/generated_bridge.dart --c-output ./flutter/ios/Runner/bridge_generated.h
 
-      - name: Build rustdesk lib
-        env:
-          VCPKG_ROOT: /opt/rustdesk_thirdparty_lib/vcpkg
-        run: |
-          rustup target add ${{ matrix.job.target }} 
-          cargo build --features flutter --release --target aarch64-apple-ios --lib
+  #   - name: Build rustdesk lib
+  #     env:
+  #       VCPKG_ROOT: /opt/rustdesk_thirdparty_lib/vcpkg
+  #     run: |
+  #       rustup target add ${{ matrix.job.target }}
+  #       cargo build --features flutter --release --target aarch64-apple-ios --lib
 
-      - name: Build rustdesk
-        shell: bash
-        run: |
-          pushd flutter
-          # flutter build ipa --release --obfuscate --split-debug-info=./split-debug-info --no-codesign
-          # for easy debugging
-          flutter build ipa --release --no-codesign
-      
-      # - name: Upload Artifacts
-      #   # if: env.ANDROID_SIGNING_KEY != null && env.UPLOAD_ARTIFACT == 'true'
-      #   uses: actions/upload-artifact@master
-      #   with:
-      #     name: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.apk
-      #     path: flutter/build/ios/ipa/*.ipa
+  #   - name: Build rustdesk
+  #     shell: bash
+  #     run: |
+  #       pushd flutter
+  #       # flutter build ipa --release --obfuscate --split-debug-info=./split-debug-info --no-codesign
+  #       # for easy debugging
+  #       flutter build ipa --release --no-codesign
 
-      # - name: Publish ipa package
-      #   # if: env.ANDROID_SIGNING_KEY != null && env.UPLOAD_ARTIFACT == 'true'
-      #   uses: softprops/action-gh-release@v1
-      #   with:
-      #     prerelease: true
-      #     tag_name: ${{ env.TAG_NAME }}
-      #     files: |
-      #       flutter/build/ios/ipa/*.ipa
-    
+  # - name: Upload Artifacts
+  #   # if: env.ANDROID_SIGNING_KEY != null && env.UPLOAD_ARTIFACT == 'true'
+  #   uses: actions/upload-artifact@master
+  #   with:
+  #     name: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.apk
+  #     path: flutter/build/ios/ipa/*.ipa
+
+  # - name: Publish ipa package
+  #   # if: env.ANDROID_SIGNING_KEY != null && env.UPLOAD_ARTIFACT == 'true'
+  #   uses: softprops/action-gh-release@v1
+  #   with:
+  #     prerelease: true
+  #     tag_name: ${{ env.TAG_NAME }}
+  #     files: |
+  #       flutter/build/ios/ipa/*.ipa
 
   # build-rustdesk-android:
-    # needs: [generate-bridge-linux]
-    # name: build rustdesk android apk ${{ matrix.job.target }} (${{ matrix.job.os }}) [${{ matrix.job.extra-build-features }}]
-    # runs-on: ${{ matrix.job.os }}
-    # strategy:
-    #   fail-fast: false
-    #   matrix:
-    #     job:
-    #       - {
-    #           arch: aarch64,
-    #           target: aarch64-linux-android,
-    #           os: ubuntu-20.04,
-    #           extra-build-features: "",
-    #           openssl-arch: android-arm64
-    #         }
-    #       - {
-    #           arch: armv7,
-    #           target: armv7-linux-androideabi,
-    #           os: ubuntu-20.04,
-    #           extra-build-features: "",
-    #           openssl-arch: android-arm
-    #         }
-    # steps:
-    #   - name: Install dependencies
-    #     run: |
-    #       sudo apt update
-    #       sudo apt-get -qq install -y  git curl wget nasm yasm libgtk-3-dev clang libxcb-randr0-dev libxdo-dev libxfixes-dev libxcb-shape0-dev libxcb-xfixes0-dev libasound2-dev libpulse-dev cmake libclang-dev ninja-build libappindicator3-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libvdpau-dev libva-dev libpam0g-dev libclang-dev llvm-dev libclang-10-dev llvm-10-dev pkg-config tree g++ libc6-dev gcc-multilib g++-multilib openjdk-11-jdk-headless
-    #   - name: Checkout source code
-    #     uses: actions/checkout@v3
-    #   - name: Install flutter
-    #     uses: subosito/flutter-action@v2
-    #     with:
-    #       channel: "stable"
-    #       flutter-version: ${{ env.FLUTTER_VERSION }}
-    #   - uses: nttld/setup-ndk@v1
-    #     id: setup-ndk
-    #     with:
-    #       ndk-version: ${{ env.NDK_VERSION }}
-    #       add-to-path: true
+  # needs: [generate-bridge-linux]
+  # name: build rustdesk android apk ${{ matrix.job.target }} (${{ matrix.job.os }}) [${{ matrix.job.extra-build-features }}]
+  # runs-on: ${{ matrix.job.os }}
+  # strategy:
+  #   fail-fast: false
+  #   matrix:
+  #     job:
+  #       - {
+  #           arch: aarch64,
+  #           target: aarch64-linux-android,
+  #           os: ubuntu-20.04,
+  #           extra-build-features: "",
+  #           openssl-arch: android-arm64
+  #         }
+  #       - {
+  #           arch: armv7,
+  #           target: armv7-linux-androideabi,
+  #           os: ubuntu-20.04,
+  #           extra-build-features: "",
+  #           openssl-arch: android-arm
+  #         }
+  # steps:
+  #   - name: Install dependencies
+  #     run: |
+  #       sudo apt update
+  #       sudo apt-get -qq install -y  git curl wget nasm yasm libgtk-3-dev clang libxcb-randr0-dev libxdo-dev libxfixes-dev libxcb-shape0-dev libxcb-xfixes0-dev libasound2-dev libpulse-dev cmake libclang-dev ninja-build libappindicator3-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libvdpau-dev libva-dev libpam0g-dev libclang-dev llvm-dev libclang-10-dev llvm-10-dev pkg-config tree g++ libc6-dev gcc-multilib g++-multilib openjdk-11-jdk-headless
+  #   - name: Checkout source code
+  #     uses: actions/checkout@v3
+  #   - name: Install flutter
+  #     uses: subosito/flutter-action@v2
+  #     with:
+  #       channel: "stable"
+  #       flutter-version: ${{ env.FLUTTER_VERSION }}
+  #   - uses: nttld/setup-ndk@v1
+  #     id: setup-ndk
+  #     with:
+  #       ndk-version: ${{ env.NDK_VERSION }}
+  #       add-to-path: true
 
-    #   - name: Clone deps
-    #     shell: bash
-    #     run: |
-    #       pushd /opt
-    #       git clone https://github.com/rustdesk-org/rustdesk_thirdparty_lib.git --depth=1
+  #   - name: Clone deps
+  #     shell: bash
+  #     run: |
+  #       pushd /opt
+  #       git clone https://github.com/rustdesk-org/rustdesk_thirdparty_lib.git --depth=1
 
-    #   - name: Restore bridge files
-    #     uses: actions/download-artifact@master
-    #     with:
-    #       name: bridge-artifact
-    #       path: ./
+  #   - name: Restore bridge files
+  #     uses: actions/download-artifact@master
+  #     with:
+  #       name: bridge-artifact
+  #       path: ./
 
-    #   - name: Install Rust toolchain
-    #     uses: actions-rs/toolchain@v1
-    #     with:
-    #       toolchain: stable
-    #       override: true
-    #       profile: minimal # minimal component installation (ie, no documentation)
+  #   - name: Install Rust toolchain
+  #     uses: actions-rs/toolchain@v1
+  #     with:
+  #       toolchain: stable
+  #       override: true
+  #       profile: minimal # minimal component installation (ie, no documentation)
 
-    #   - uses: Swatinem/rust-cache@v2
-    #     with:
-    #       prefix-key: rustdesk-lib-cache
-    #       key: ${{ matrix.job.target }}-${{ matrix.job.extra-build-features }}
+  #   - uses: Swatinem/rust-cache@v2
+  #     with:
+  #       prefix-key: rustdesk-lib-cache
+  #       key: ${{ matrix.job.target }}-${{ matrix.job.extra-build-features }}
 
-    #   - name: Build rustdesk lib
-    #     env:
-    #       ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
-    #       ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
-    #       VCPKG_ROOT: /opt/rustdesk_thirdparty_lib/vcpkg
-    #     run: |
-    #       rustup target add ${{ matrix.job.target }} 
-    #       cargo install cargo-ndk --version ${{ env.CARGO_NDK_VERSION }}
-    #       case ${{ matrix.job.target }} in
-    #         aarch64-linux-android)
-    #           ./flutter/ndk_arm64.sh
-    #           mkdir -p ./flutter/android/app/src/main/jniLibs/arm64-v8a
-    #           cp ./target/${{ matrix.job.target }}/release/liblibrustdesk.so ./flutter/android/app/src/main/jniLibs/arm64-v8a/librustdesk.so
-    #         ;;
-    #         armv7-linux-androideabi)
-    #           ./flutter/ndk_arm.sh
-    #           mkdir -p ./flutter/android/app/src/main/jniLibs/armeabi-v7a
-    #           cp ./target/${{ matrix.job.target }}/release/liblibrustdesk.so ./flutter/android/app/src/main/jniLibs/armeabi-v7a/librustdesk.so
-    #         ;;
-    #       esac
+  #   - name: Build rustdesk lib
+  #     env:
+  #       ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+  #       ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
+  #       VCPKG_ROOT: /opt/rustdesk_thirdparty_lib/vcpkg
+  #     run: |
+  #       rustup target add ${{ matrix.job.target }}
+  #       cargo install cargo-ndk --version ${{ env.CARGO_NDK_VERSION }}
+  #       case ${{ matrix.job.target }} in
+  #         aarch64-linux-android)
+  #           ./flutter/ndk_arm64.sh
+  #           mkdir -p ./flutter/android/app/src/main/jniLibs/arm64-v8a
+  #           cp ./target/${{ matrix.job.target }}/release/liblibrustdesk.so ./flutter/android/app/src/main/jniLibs/arm64-v8a/librustdesk.so
+  #         ;;
+  #         armv7-linux-androideabi)
+  #           ./flutter/ndk_arm.sh
+  #           mkdir -p ./flutter/android/app/src/main/jniLibs/armeabi-v7a
+  #           cp ./target/${{ matrix.job.target }}/release/liblibrustdesk.so ./flutter/android/app/src/main/jniLibs/armeabi-v7a/librustdesk.so
+  #         ;;
+  #       esac
 
-    #   - name: Build rustdesk
-    #     shell: bash
-    #     env:
-    #       JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
-    #     run: |
-    #       export PATH=/usr/lib/jvm/java-11-openjdk-amd64/bin:$PATH
-    #       # temporary use debug sign config
-    #       sed -i "s/signingConfigs.release/signingConfigs.debug/g" ./flutter/android/app/build.gradle
-    #       case ${{ matrix.job.target }} in
-    #         aarch64-linux-android)
-    #           mkdir -p ./flutter/android/app/src/main/jniLibs/arm64-v8a
-    #           cp /opt/rustdesk_thirdparty_lib/android/app/src/main/jniLibs/arm64-v8a/*.so ./flutter/android/app/src/main/jniLibs/arm64-v8a/
-    #           cp ./target/${{ matrix.job.target }}/release/liblibrustdesk.so ./flutter/android/app/src/main/jniLibs/arm64-v8a/librustdesk.so
-    #           # build flutter
-    #           pushd flutter
-    #           flutter build apk --release --target-platform android-arm64 --split-per-abi
-    #           mv build/app/outputs/flutter-apk/app-arm64-v8a-release.apk ../rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.apk
-    #         ;;
-    #         armv7-linux-androideabi)
-    #           mkdir -p ./flutter/android/app/src/main/jniLibs/armeabi-v7a
-    #           cp /opt/rustdesk_thirdparty_lib/android/app/src/main/jniLibs/armeabi-v7a/*.so ./flutter/android/app/src/main/jniLibs/armeabi-v7a/
-    #           cp ./target/${{ matrix.job.target }}/release/liblibrustdesk.so ./flutter/android/app/src/main/jniLibs/armeabi-v7a/librustdesk.so
-    #           # build flutter
-    #           pushd flutter
-    #           flutter build apk --release --target-platform android-arm --split-per-abi
-    #           mv build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk ../rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.apk
-    #         ;;
-    #       esac
-    #       popd
-    #       mkdir -p signed-apk; pushd signed-apk
-    #       mv ../rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.apk .
-      
-    #   - uses: r0adkll/sign-android-release@v1
-    #     name: Sign app APK
-    #     if: env.ANDROID_SIGNING_KEY != null
-    #     id: sign-rustdesk
-    #     with:
-    #       releaseDirectory: ./signed-apk
-    #       signingKeyBase64: ${{ secrets.ANDROID_SIGNING_KEY }}
-    #       alias: ${{ secrets.ANDROID_ALIAS }}
-    #       keyStorePassword: ${{ secrets.ANDROID_KEY_STORE_PASSWORD }}
-    #       keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
-    #     env:
-    #       # override default build-tools version (29.0.3) -- optional
-    #       BUILD_TOOLS_VERSION: "30.0.2"
+  #   - name: Build rustdesk
+  #     shell: bash
+  #     env:
+  #       JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
+  #     run: |
+  #       export PATH=/usr/lib/jvm/java-11-openjdk-amd64/bin:$PATH
+  #       # temporary use debug sign config
+  #       sed -i "s/signingConfigs.release/signingConfigs.debug/g" ./flutter/android/app/build.gradle
+  #       case ${{ matrix.job.target }} in
+  #         aarch64-linux-android)
+  #           mkdir -p ./flutter/android/app/src/main/jniLibs/arm64-v8a
+  #           cp /opt/rustdesk_thirdparty_lib/android/app/src/main/jniLibs/arm64-v8a/*.so ./flutter/android/app/src/main/jniLibs/arm64-v8a/
+  #           cp ./target/${{ matrix.job.target }}/release/liblibrustdesk.so ./flutter/android/app/src/main/jniLibs/arm64-v8a/librustdesk.so
+  #           # build flutter
+  #           pushd flutter
+  #           flutter build apk --release --target-platform android-arm64 --split-per-abi
+  #           mv build/app/outputs/flutter-apk/app-arm64-v8a-release.apk ../rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.apk
+  #         ;;
+  #         armv7-linux-androideabi)
+  #           mkdir -p ./flutter/android/app/src/main/jniLibs/armeabi-v7a
+  #           cp /opt/rustdesk_thirdparty_lib/android/app/src/main/jniLibs/armeabi-v7a/*.so ./flutter/android/app/src/main/jniLibs/armeabi-v7a/
+  #           cp ./target/${{ matrix.job.target }}/release/liblibrustdesk.so ./flutter/android/app/src/main/jniLibs/armeabi-v7a/librustdesk.so
+  #           # build flutter
+  #           pushd flutter
+  #           flutter build apk --release --target-platform android-arm --split-per-abi
+  #           mv build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk ../rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.apk
+  #         ;;
+  #       esac
+  #       popd
+  #       mkdir -p signed-apk; pushd signed-apk
+  #       mv ../rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.apk .
 
-    #   - name: Upload Artifacts
-    #     if: env.ANDROID_SIGNING_KEY != null && env.UPLOAD_ARTIFACT == 'true'
-    #     uses: actions/upload-artifact@master
-    #     with:
-    #       name: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.apk
-    #       path: ${{steps.sign-rustdesk.outputs.signedReleaseFile}}
+  #   - uses: r0adkll/sign-android-release@v1
+  #     name: Sign app APK
+  #     if: env.ANDROID_SIGNING_KEY != null
+  #     id: sign-rustdesk
+  #     with:
+  #       releaseDirectory: ./signed-apk
+  #       signingKeyBase64: ${{ secrets.ANDROID_SIGNING_KEY }}
+  #       alias: ${{ secrets.ANDROID_ALIAS }}
+  #       keyStorePassword: ${{ secrets.ANDROID_KEY_STORE_PASSWORD }}
+  #       keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
+  #     env:
+  #       # override default build-tools version (29.0.3) -- optional
+  #       BUILD_TOOLS_VERSION: "30.0.2"
 
-    #   - name: Publish signed apk package
-    #     if: env.ANDROID_SIGNING_KEY != null && env.UPLOAD_ARTIFACT == 'true'
-    #     uses: softprops/action-gh-release@v1
-    #     with:
-    #       prerelease: true
-    #       tag_name: ${{ env.TAG_NAME }}
-    #       files: |
-    #         ${{steps.sign-rustdesk.outputs.signedReleaseFile}}
+  #   - name: Upload Artifacts
+  #     if: env.ANDROID_SIGNING_KEY != null && env.UPLOAD_ARTIFACT == 'true'
+  #     uses: actions/upload-artifact@master
+  #     with:
+  #       name: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.apk
+  #       path: ${{steps.sign-rustdesk.outputs.signedReleaseFile}}
 
-    #   - name: Publish unsigned apk package
-    #     if: env.ANDROID_SIGNING_KEY == null && env.UPLOAD_ARTIFACT == 'true'
-    #     uses: softprops/action-gh-release@v1
-    #     with:
-    #       prerelease: true
-    #       tag_name: ${{ env.TAG_NAME }}
-    #       files: |
-    #         signed-apk/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.apk
+  #   - name: Publish signed apk package
+  #     if: env.ANDROID_SIGNING_KEY != null && env.UPLOAD_ARTIFACT == 'true'
+  #     uses: softprops/action-gh-release@v1
+  #     with:
+  #       prerelease: true
+  #       tag_name: ${{ env.TAG_NAME }}
+  #       files: |
+  #         ${{steps.sign-rustdesk.outputs.signedReleaseFile}}
+
+  #   - name: Publish unsigned apk package
+  #     if: env.ANDROID_SIGNING_KEY == null && env.UPLOAD_ARTIFACT == 'true'
+  #     uses: softprops/action-gh-release@v1
+  #     with:
+  #       prerelease: true
+  #       tag_name: ${{ env.TAG_NAME }}
+  #       files: |
+  #         signed-apk/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.apk
 
   build-rustdesk-lib-linux-amd64:
     needs: [generate-bridge-linux, build-vcpkg-deps-linux]
-    name: build-rust-lib ${{ matrix.job.target }} (${{ matrix.job.os }}) [${{ matrix.job.extra-build-features }}]
+    name:
+      build-rust-lib ${{ matrix.job.target }} (${{ matrix.job.os }}) [${{
+      matrix.job.extra-build-features }}]
     runs-on: ${{ matrix.job.os }}
     strategy:
       fail-fast: false
@@ -649,22 +652,22 @@ jobs:
               arch: x86_64,
               target: x86_64-unknown-linux-gnu,
               os: ubuntu-20.04,
-              extra-build-features: "",
-              enable-headless: true
+              extra-build-features: '',
+              enable-headless: true,
             }
           - {
               arch: x86_64,
               target: x86_64-unknown-linux-gnu,
               os: ubuntu-20.04,
-              extra-build-features: "flatpak",
-              enable-headless: false
+              extra-build-features: 'flatpak',
+              enable-headless: false,
             }
           - {
               arch: x86_64,
               target: x86_64-unknown-linux-gnu,
               os: ubuntu-20.04,
-              extra-build-features: "appimage",
-              enable-headless: false
+              extra-build-features: 'appimage',
+              enable-headless: false,
             }
           # - { target: x86_64-unknown-linux-musl   , os: ubuntu-20.04, use-cross: true }
     steps:
@@ -696,7 +699,7 @@ jobs:
           target: ${{ matrix.job.target }}
           override: true
           profile: minimal # minimal component installation (ie, no documentation)
-      
+
       - name: Save Rust toolchain version
         run: |
           RUST_TOOLCHAIN_VERSION=$(cargo --version | awk '{print $2}')
@@ -779,13 +782,17 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@master
         with:
-          name: librustdesk-${{ matrix.job.arch }}-${{ matrix.job.extra-build-features }}.so
+          name:
+            librustdesk-${{ matrix.job.arch }}-${{
+            matrix.job.extra-build-features }}.so
           path: target/release/liblibrustdesk.so
 
   build-rustdesk-lib-linux-arm:
     if: ${{ inputs.upload-artifact }}
     needs: [generate-bridge-linux, build-vcpkg-deps-linux]
-    name: build-rust-lib ${{ matrix.job.target }} (${{ matrix.job.os }}) [${{ matrix.job.extra-build-features }}]
+    name:
+      build-rust-lib ${{ matrix.job.target }} (${{ matrix.job.os }}) [${{
+      matrix.job.extra-build-features }}]
     runs-on: [self-hosted, Linux, ARM64]
     strategy:
       fail-fast: false
@@ -797,16 +804,16 @@ jobs:
               target: aarch64-unknown-linux-gnu,
               os: ubuntu-20.04, # just for naming package, not running host
               use-cross: true,
-              extra-build-features: "",
-              enable-headless: true
+              extra-build-features: '',
+              enable-headless: true,
             }
           - {
               arch: aarch64,
               target: aarch64-unknown-linux-gnu,
               os: ubuntu-20.04, # just for naming package, not running host
               use-cross: true,
-              extra-build-features: "appimage",
-              enable-headless: false
+              extra-build-features: 'appimage',
+              enable-headless: false,
             }
           # - { arch: aarch64, target: aarch64-unknown-linux-gnu   , os: ubuntu-20.04, use-cross: true, extra-build-features: "flatpak" }
           # - {
@@ -847,7 +854,7 @@ jobs:
           target: ${{ matrix.job.target }}
           override: true
           profile: minimal # minimal component installation (ie, no documentation)
-      
+
       - name: Save Rust toolchain version
         run: |
           RUST_TOOLCHAIN_VERSION=$(cargo --version | awk '{print $2}')
@@ -923,154 +930,158 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@master
         with:
-          name: librustdesk-${{ matrix.job.arch }}-${{ matrix.job.extra-build-features }}.so
+          name:
+            librustdesk-${{ matrix.job.arch }}-${{
+            matrix.job.extra-build-features }}.so
           path: target/release/liblibrustdesk.so
 
   # не работает сервер
   # build-rustdesk-sciter-arm:
-    # if: ${{ inputs.upload-artifact }}
-    # needs: [build-vcpkg-deps-linux]
-    # name: build-rustdesk(sciter) ${{ matrix.job.target }} (${{ matrix.job.os }}) [${{ matrix.job.extra-build-features }}]
-    # runs-on: [self-hosted, Linux, ARM64]
-    # strategy:
-    #   fail-fast: false
-    #   matrix:
-    #     # use a high level qemu-user-static
-    #     job:
-    #       - {
-    #           arch: armv7,
-    #           target: armv7-unknown-linux-gnueabihf,
-    #           deb-arch: armhf,
-    #           os: ubuntu-latest,
-    #           use-cross: true,
-    #           extra-build-features: "",
-    #           enable-headless: true
-    #         }
-    #       # - { arch: armv7, target: armv7-unknown-linux-gnueabihf , os: ubuntu-20.04, use-cross: true, extra-build-features: "appimage" }
-    #       # - { target: arm-unknown-linux-musleabihf, os: ubuntu-20.04, use-cross: true }
-    # steps:
+  # if: ${{ inputs.upload-artifact }}
+  # needs: [build-vcpkg-deps-linux]
+  # name: build-rustdesk(sciter) ${{ matrix.job.target }} (${{ matrix.job.os }}) [${{ matrix.job.extra-build-features }}]
+  # runs-on: [self-hosted, Linux, ARM64]
+  # strategy:
+  #   fail-fast: false
+  #   matrix:
+  #     # use a high level qemu-user-static
+  #     job:
+  #       - {
+  #           arch: armv7,
+  #           target: armv7-unknown-linux-gnueabihf,
+  #           deb-arch: armhf,
+  #           os: ubuntu-latest,
+  #           use-cross: true,
+  #           extra-build-features: "",
+  #           enable-headless: true
+  #         }
+  #       # - { arch: armv7, target: armv7-unknown-linux-gnueabihf , os: ubuntu-20.04, use-cross: true, extra-build-features: "appimage" }
+  #       # - { target: arm-unknown-linux-musleabihf, os: ubuntu-20.04, use-cross: true }
+  # steps:
 
-    #   #- name: Maximize build space
-    #   #  run: |
-    #   #    sudo rm -rf /opt/ghc
-    #   #    sudo rm -rf /usr/local/lib/android
-    #   #    sudo rm -rf /usr/share/dotnet
-    #   #    sudo apt update -y
-    #   #    sudo apt install qemu-user-static -y
+  #   #- name: Maximize build space
+  #   #  run: |
+  #   #    sudo rm -rf /opt/ghc
+  #   #    sudo rm -rf /usr/local/lib/android
+  #   #    sudo rm -rf /usr/share/dotnet
+  #   #    sudo apt update -y
+  #   #    sudo apt install qemu-user-static -y
 
-    #   - name: Checkout source code
-    #     uses: actions/checkout@v3
+  #   - name: Checkout source code
+  #     uses: actions/checkout@v3
 
-    #   #- name: Set Swap Space
-    #   #  uses: pierotofy/set-swap-space@master
-    #   #  with:
-    #   #    swap-size-gb: 12
+  #   #- name: Set Swap Space
+  #   #  uses: pierotofy/set-swap-space@master
+  #   #  with:
+  #   #    swap-size-gb: 12
 
-    #   - name: Free Space
-    #     run: |
-    #       df -h
-    #       free -m
+  #   - name: Free Space
+  #     run: |
+  #       df -h
+  #       free -m
 
-    #   - name: Install Rust toolchain
-    #     uses: actions-rs/toolchain@v1
-    #     with:
-    #       toolchain: stable
-    #       target: ${{ matrix.job.target }}
-    #       override: true
-    #       profile: minimal # minimal component installation (ie, no documentation)
-      
-    #   - name: Save Rust toolchain version
-    #     run: |
-    #       RUST_TOOLCHAIN_VERSION=$(cargo --version | awk '{print $2}')
-    #       echo "RUST_TOOLCHAIN_VERSION=$RUST_TOOLCHAIN_VERSION" >> $GITHUB_ENV
+  #   - name: Install Rust toolchain
+  #     uses: actions-rs/toolchain@v1
+  #     with:
+  #       toolchain: stable
+  #       target: ${{ matrix.job.target }}
+  #       override: true
+  #       profile: minimal # minimal component installation (ie, no documentation)
 
-    #   - name: Restore vcpkg files
-    #     uses: actions/download-artifact@master
-    #     with:
-    #       name: vcpkg-artifact-${{ matrix.job.arch }}
-    #       path: /opt/artifacts/vcpkg/installed
+  #   - name: Save Rust toolchain version
+  #     run: |
+  #       RUST_TOOLCHAIN_VERSION=$(cargo --version | awk '{print $2}')
+  #       echo "RUST_TOOLCHAIN_VERSION=$RUST_TOOLCHAIN_VERSION" >> $GITHUB_ENV
 
-    #   - uses: rustdesk-org/run-on-arch-action@amd64-support
-    #     name: Build rustdesk sciter binary for ${{ matrix.job.arch }}
-    #     id: vcpkg
-    #     with:
-    #       arch: ${{ matrix.job.arch }}
-    #       distro: ubuntu18.04-rustdesk
-    #       githubToken: ${{ github.token }}
-    #       setup: |
-    #         ls -l "${PWD}"
-    #       dockerRunArgs: |
-    #         --volume "${PWD}:/workspace"
-    #         --volume "/opt/artifacts:/opt/artifacts"
-    #       shell: /bin/bash
-    #       install: |
-    #         apt update -y
-    #         apt-get -qq install -y git cmake g++ gcc build-essential nasm yasm curl unzip xz-utils python3 wget pkg-config ninja-build pkg-config libgtk-3-dev liblzma-dev clang libappindicator3-dev rpm libclang-dev
-    #         apt-get -qq install -y libdbus-1-dev pkg-config nasm yasm libglib2.0-dev libxcb-randr0-dev libxdo-dev libxfixes-dev libxcb-shape0-dev libxcb-xfixes0-dev libasound2-dev 
-    #         apt-get -qq install -y libpulse-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libvpx-dev libvdpau-dev libva-dev libpam0g-dev
-    #       run: |
-    #         # disable git safe.directory
-    #         git config --global --add safe.directory "*"
-    #         # rust
-    #         pushd /opt
-    #         # do not use rustup, because memory overflow in qemu
-    #         wget -O rust.tar.gz https://static.rust-lang.org/dist/rust-${{env.RUST_TOOLCHAIN_VERSION}}-${{ matrix.job.target }}.tar.gz
-    #         tar -zxvf rust.tar.gz > /dev/null && rm rust.tar.gz
-    #         cd rust-${{env.RUST_TOOLCHAIN_VERSION}}-${{ matrix.job.target }} && ./install.sh
-    #         rm -rf rust-${{env.RUST_TOOLCHAIN_VERSION}}-${{ matrix.job.target }}
-    #         # edit config
-    #         mkdir -p ~/.cargo/
-    #         echo """
-    #           [source.crates-io]
-    #           registry = 'https://github.com/rust-lang/crates.io-index'
-    #         """ > ~/.cargo/config
-    #         cat ~/.cargo/config
-            
-    #         # build
-    #         pushd /workspace
-    #         python3 ./res/inline-sciter.py
-    #         export VCPKG_ROOT=/opt/artifacts/vcpkg
-    #         export ARCH=armhf
-    #         export DEFAULT_FEAT=""
-    #         export CARGO_INCREMENTAL=0
-    #         if ${{ matrix.job.enable-headless }}; then
-    #           export DEFAULT_FEAT=linux_headless
-    #         fi
-    #         cargo build --features inline,${{ matrix.job.extra-build-features }},$DEFAULT_FEAT --release --bins
-    #         # package
-    #         mkdir -p ./Release
-    #         mv ./target/release/rustdesk ./Release/rustdesk
-    #         wget -O ./Release/libsciter-gtk.so https://github.com/c-smile/sciter-sdk/raw/master/bin.lnx/arm32/libsciter-gtk.so
-    #         ./build.py --package ./Release
+  #   - name: Restore vcpkg files
+  #     uses: actions/download-artifact@master
+  #     with:
+  #       name: vcpkg-artifact-${{ matrix.job.arch }}
+  #       path: /opt/artifacts/vcpkg/installed
 
-    #   - name: Rename rustdesk
-    #     shell: bash
-    #     run: |
-    #       for name in rustdesk*??.deb; do
-    #           # use cp to duplicate deb files to fit other packages.
-    #           cp "$name" "${name%%.deb}-${{ matrix.job.arch }}-sciter.deb"
-    #       done
+  #   - uses: rustdesk-org/run-on-arch-action@amd64-support
+  #     name: Build rustdesk sciter binary for ${{ matrix.job.arch }}
+  #     id: vcpkg
+  #     with:
+  #       arch: ${{ matrix.job.arch }}
+  #       distro: ubuntu18.04-rustdesk
+  #       githubToken: ${{ github.token }}
+  #       setup: |
+  #         ls -l "${PWD}"
+  #       dockerRunArgs: |
+  #         --volume "${PWD}:/workspace"
+  #         --volume "/opt/artifacts:/opt/artifacts"
+  #       shell: /bin/bash
+  #       install: |
+  #         apt update -y
+  #         apt-get -qq install -y git cmake g++ gcc build-essential nasm yasm curl unzip xz-utils python3 wget pkg-config ninja-build pkg-config libgtk-3-dev liblzma-dev clang libappindicator3-dev rpm libclang-dev
+  #         apt-get -qq install -y libdbus-1-dev pkg-config nasm yasm libglib2.0-dev libxcb-randr0-dev libxdo-dev libxfixes-dev libxcb-shape0-dev libxcb-xfixes0-dev libasound2-dev
+  #         apt-get -qq install -y libpulse-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libvpx-dev libvdpau-dev libva-dev libpam0g-dev
+  #       run: |
+  #         # disable git safe.directory
+  #         git config --global --add safe.directory "*"
+  #         # rust
+  #         pushd /opt
+  #         # do not use rustup, because memory overflow in qemu
+  #         wget -O rust.tar.gz https://static.rust-lang.org/dist/rust-${{env.RUST_TOOLCHAIN_VERSION}}-${{ matrix.job.target }}.tar.gz
+  #         tar -zxvf rust.tar.gz > /dev/null && rm rust.tar.gz
+  #         cd rust-${{env.RUST_TOOLCHAIN_VERSION}}-${{ matrix.job.target }} && ./install.sh
+  #         rm -rf rust-${{env.RUST_TOOLCHAIN_VERSION}}-${{ matrix.job.target }}
+  #         # edit config
+  #         mkdir -p ~/.cargo/
+  #         echo """
+  #           [source.crates-io]
+  #           registry = 'https://github.com/rust-lang/crates.io-index'
+  #         """ > ~/.cargo/config
+  #         cat ~/.cargo/config
 
-    #   - name: Publish debian package
-    #     if: matrix.job.extra-build-features == '' && env.UPLOAD_ARTIFACT == 'true'
-    #     uses: softprops/action-gh-release@v1
-    #     with:
-    #       prerelease: true
-    #       tag_name: ${{ env.TAG_NAME }}
-    #       files: |
-    #         rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.deb
+  #         # build
+  #         pushd /workspace
+  #         python3 ./res/inline-sciter.py
+  #         export VCPKG_ROOT=/opt/artifacts/vcpkg
+  #         export ARCH=armhf
+  #         export DEFAULT_FEAT=""
+  #         export CARGO_INCREMENTAL=0
+  #         if ${{ matrix.job.enable-headless }}; then
+  #           export DEFAULT_FEAT=linux_headless
+  #         fi
+  #         cargo build --features inline,${{ matrix.job.extra-build-features }},$DEFAULT_FEAT --release --bins
+  #         # package
+  #         mkdir -p ./Release
+  #         mv ./target/release/rustdesk ./Release/rustdesk
+  #         wget -O ./Release/libsciter-gtk.so https://github.com/c-smile/sciter-sdk/raw/master/bin.lnx/arm32/libsciter-gtk.so
+  #         ./build.py --package ./Release
 
-    #   - name: Upload Artifact
-    #     uses: actions/upload-artifact@master
-    #     if: ${{ contains(matrix.job.extra-build-features, 'flatpak') }}
-    #     with:
-    #       name: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.deb
-    #       path: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.deb
+  #   - name: Rename rustdesk
+  #     shell: bash
+  #     run: |
+  #       for name in rustdesk*??.deb; do
+  #           # use cp to duplicate deb files to fit other packages.
+  #           cp "$name" "${name%%.deb}-${{ matrix.job.arch }}-sciter.deb"
+  #       done
+
+  #   - name: Publish debian package
+  #     if: matrix.job.extra-build-features == '' && env.UPLOAD_ARTIFACT == 'true'
+  #     uses: softprops/action-gh-release@v1
+  #     with:
+  #       prerelease: true
+  #       tag_name: ${{ env.TAG_NAME }}
+  #       files: |
+  #         rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.deb
+
+  #   - name: Upload Artifact
+  #     uses: actions/upload-artifact@master
+  #     if: ${{ contains(matrix.job.extra-build-features, 'flatpak') }}
+  #     with:
+  #       name: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.deb
+  #       path: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.deb
 
   build-rustdesk-linux-arm:
     if: ${{ inputs.upload-artifact }}
     needs: [build-rustdesk-lib-linux-arm]
-    name: build-rustdesk ${{ matrix.job.target }} (${{ matrix.job.os }}) [${{ matrix.job.extra-build-features }}]
+    name:
+      build-rustdesk ${{ matrix.job.target }} (${{ matrix.job.os }}) [${{
+      matrix.job.extra-build-features }}]
     runs-on: ubuntu-20.04 # 20.04 has more performance on arm build
     strategy:
       fail-fast: false
@@ -1081,14 +1092,14 @@ jobs:
               target: aarch64-unknown-linux-gnu,
               os: ubuntu-18.04, # just for naming package, not running host
               use-cross: true,
-              extra-build-features: "",
+              extra-build-features: '',
             }
           - {
               arch: aarch64,
               target: aarch64-unknown-linux-gnu,
               os: ubuntu-18.04, # just for naming package, not running host
               use-cross: true,
-              extra-build-features: "appimage",
+              extra-build-features: 'appimage',
             }
           # - {
           #     arch: aarch64,
@@ -1119,7 +1130,9 @@ jobs:
       - name: Restore the rustdesk lib file
         uses: actions/download-artifact@master
         with:
-          name: librustdesk-${{ matrix.job.arch }}-${{ matrix.job.extra-build-features }}.so
+          name:
+            librustdesk-${{ matrix.job.arch }}-${{
+            matrix.job.extra-build-features }}.so
           path: ./target/release/
 
       - name: Download Flutter
@@ -1226,14 +1239,15 @@ jobs:
           done
 
       - name: Publish debian package
-        if: matrix.job.extra-build-features == '' && env.UPLOAD_ARTIFACT == 'true'
+        if:
+          matrix.job.extra-build-features == '' && env.UPLOAD_ARTIFACT == 'true'
         uses: softprops/action-gh-release@v1
         with:
           prerelease: true
           tag_name: ${{ env.TAG_NAME }}
           files: |
             rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.deb
-      
+
       - name: Build appimage package
         if: ${{ matrix.job.extra-build-features == 'appimage' }}
         shell: bash
@@ -1249,7 +1263,9 @@ jobs:
           sudo appimage-builder --skip-tests --recipe ./AppImageBuilder-${{ matrix.job.arch }}.yml
 
       - name: Publish appimage package
-        if: matrix.job.extra-build-features == 'appimage' && env.UPLOAD_ARTIFACT == 'true'
+        if:
+          matrix.job.extra-build-features == 'appimage' && env.UPLOAD_ARTIFACT
+          == 'true'
         uses: softprops/action-gh-release@v1
         with:
           prerelease: true
@@ -1323,7 +1339,8 @@ jobs:
       #       res/rustdesk*.zst
 
       - name: Publish fedora package
-        if: matrix.job.extra-build-features == '' && env.UPLOAD_ARTIFACT == 'true'
+        if:
+          matrix.job.extra-build-features == '' && env.UPLOAD_ARTIFACT == 'true'
         uses: softprops/action-gh-release@v1
         with:
           prerelease: true
@@ -1333,7 +1350,9 @@ jobs:
 
   build-rustdesk-linux-amd64:
     needs: [build-rustdesk-lib-linux-amd64]
-    name: build-rustdesk ${{ matrix.job.target }} (${{ matrix.job.os }}) [${{ matrix.job.extra-build-features }}]
+    name:
+      build-rustdesk ${{ matrix.job.target }} (${{ matrix.job.os }}) [${{
+      matrix.job.extra-build-features }}]
     runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
@@ -1344,20 +1363,20 @@ jobs:
           - {
               arch: x86_64,
               target: x86_64-unknown-linux-gnu,
-              os: ubuntu-18.04, 
-              extra-build-features: "",
+              os: ubuntu-18.04,
+              extra-build-features: '',
             }
           - {
               arch: x86_64,
               target: x86_64-unknown-linux-gnu,
               os: ubuntu-18.04,
-              extra-build-features: "flatpak",
+              extra-build-features: 'flatpak',
             }
           - {
               arch: x86_64,
               target: x86_64-unknown-linux-gnu,
               os: ubuntu-18.04,
-              extra-build-features: "appimage",
+              extra-build-features: 'appimage',
             }
           # - { target: x86_64-unknown-linux-musl   , os: ubuntu-20.04, use-cross: true }
     steps:
@@ -1379,7 +1398,9 @@ jobs:
       - name: Restore the rustdesk lib file
         uses: actions/download-artifact@master
         with:
-          name: librustdesk-${{ matrix.job.arch }}-${{ matrix.job.extra-build-features }}.so
+          name:
+            librustdesk-${{ matrix.job.arch }}-${{
+            matrix.job.extra-build-features }}.so
           path: ./target/release/
 
       - uses: rustdesk-org/run-on-arch-action@amd64-support
@@ -1446,7 +1467,8 @@ jobs:
           done
 
       - name: Publish debian package
-        if: matrix.job.extra-build-features == '' && env.UPLOAD_ARTIFACT == 'true'
+        if:
+          matrix.job.extra-build-features == '' && env.UPLOAD_ARTIFACT == 'true'
         uses: softprops/action-gh-release@v1
         with:
           prerelease: true
@@ -1471,41 +1493,16 @@ jobs:
         uses: vufa/arch-makepkg-action@master
         with:
           packages: >
-            llvm
-            clang
-            libva
-            libvdpau
-            rust
-            gstreamer
-            unzip
-            git
-            cmake
-            gcc
-            curl
-            wget
-            yasm
-            nasm
-            zip
-            make
-            pkg-config
-            clang
-            gtk3
-            xdotool
-            libxcb
-            libxfixes
-            alsa-lib
-            pipewire
-            python
-            ttf-arphic-uming
-            libappindicator-gtk3
-            pam
-            gst-plugins-base
-            gst-plugin-pipewire
+            llvm clang libva libvdpau rust gstreamer unzip git cmake gcc curl
+            wget yasm nasm zip make pkg-config clang gtk3 xdotool libxcb
+            libxfixes alsa-lib pipewire python ttf-arphic-uming
+            libappindicator-gtk3 pam gst-plugins-base gst-plugin-pipewire
           scripts: |
             cd res && HBB=`pwd`/.. FLUTTER=1 makepkg -f
 
       - name: Publish archlinux package
-        if: matrix.job.extra-build-features == '' && env.UPLOAD_ARTIFACT == 'true'
+        if:
+          matrix.job.extra-build-features == '' && env.UPLOAD_ARTIFACT == 'true'
         uses: softprops/action-gh-release@v1
         with:
           prerelease: true
@@ -1514,7 +1511,9 @@ jobs:
             res/rustdesk*.zst
 
       - name: Build appimage package
-        if: matrix.job.extra-build-features == 'appimage' && env.UPLOAD_ARTIFACT == 'true'
+        if:
+          matrix.job.extra-build-features == 'appimage' && env.UPLOAD_ARTIFACT
+          == 'true'
         shell: bash
         run: |
           # set-up appimage-builder
@@ -1528,7 +1527,9 @@ jobs:
           sudo appimage-builder --skip-tests --recipe ./AppImageBuilder-x86_64.yml
 
       - name: Publish appimage package
-        if: matrix.job.extra-build-features == 'appimage' && env.UPLOAD_ARTIFACT == 'true'
+        if:
+          matrix.job.extra-build-features == 'appimage' && env.UPLOAD_ARTIFACT
+          == 'true'
         uses: softprops/action-gh-release@v1
         with:
           prerelease: true
@@ -1537,7 +1538,8 @@ jobs:
             ./appimage/rustdesk-${{ env.VERSION }}-*.AppImage
 
       - name: Publish fedora package
-        if: matrix.job.extra-build-features == '' && env.UPLOAD_ARTIFACT == 'true'
+        if:
+          matrix.job.extra-build-features == '' && env.UPLOAD_ARTIFACT == 'true'
         uses: softprops/action-gh-release@v1
         with:
           prerelease: true
@@ -1651,7 +1653,7 @@ jobs:
   #           # disable git safe.directory
   #           git config --global --add safe.directory "*"
   #           pushd /workspace
-  #           # install 
+  #           # install
   #           apt update -y
   #           apt install -y flatpak flatpak-builder cmake g++ gcc git curl wget nasm yasm libgtk-3-dev git
   #           # flatpak deps
