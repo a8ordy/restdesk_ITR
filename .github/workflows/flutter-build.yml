@@ -140,245 +140,246 @@ jobs:
             ./SignOutput/rustdesk-*.exe
 
   # The fallback for the flutter version, we use Sciter for 32bit Windows.
-  build-for-windows-sciter:
-    name: ${{ matrix.job.target }} (${{ matrix.job.os }})
-    runs-on: ${{ matrix.job.os }}
-    # Temporarily disable this action due to additional test is needed.
-    # if: false 
-    strategy:
-      fail-fast: false
-      matrix:
-        job:
-          # - { target: i686-pc-windows-msvc        , os: windows-2019                  }
-          # - { target: x86_64-pc-windows-gnu       , os: windows-2019                  }
-          - { target: i686-pc-windows-msvc, os: windows-2019, arch: x86 }
-          # - { target: aarch64-pc-windows-msvc, os: windows-2019 }
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v3
+  # В 32-битной версии не стартует сервер
+  # build-for-windows-sciter:
+  #   name: ${{ matrix.job.target }} (${{ matrix.job.os }})
+  #   runs-on: ${{ matrix.job.os }}
+  #   # Temporarily disable this action due to additional test is needed.
+  #   # if: false 
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       job:
+  #         # - { target: i686-pc-windows-msvc        , os: windows-2019                  }
+  #         # - { target: x86_64-pc-windows-gnu       , os: windows-2019                  }
+  #         - { target: i686-pc-windows-msvc, os: windows-2019, arch: x86 }
+  #         # - { target: aarch64-pc-windows-msvc, os: windows-2019 }
+  #   steps:
+  #     - name: Checkout source code
+  #       uses: actions/checkout@v3
 
-      - name: Install LLVM and Clang
-        uses: rustdesk-org/install-llvm-action-32bit@master
-        with:
-          version: ${{ env.LLVM_VERSION }}
+  #     - name: Install LLVM and Clang
+  #       uses: rustdesk-org/install-llvm-action-32bit@master
+  #       with:
+  #         version: ${{ env.LLVM_VERSION }}
 
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly-2023-10-13-${{ matrix.job.target }}
-          target: ${{ matrix.job.target }}
-          override: true
-          components: "rustfmt"
+  #     - name: Install Rust toolchain
+  #       uses: actions-rs/toolchain@v1
+  #       with:
+  #         toolchain: nightly-2023-10-13-${{ matrix.job.target }}
+  #         target: ${{ matrix.job.target }}
+  #         override: true
+  #         components: "rustfmt"
 
-      - uses: Swatinem/rust-cache@v2
-        with:
-          prefix-key: ${{ matrix.job.os }}-sciter
+  #     - uses: Swatinem/rust-cache@v2
+  #       with:
+  #         prefix-key: ${{ matrix.job.os }}-sciter
 
-      - name: Restore from cache and install vcpkg
-        uses: lukka/run-vcpkg@v7
-        with:
-          setupOnly: true
-          vcpkgGitCommitId: ${{ env.VCPKG_COMMIT_ID }}
+  #     - name: Restore from cache and install vcpkg
+  #       uses: lukka/run-vcpkg@v7
+  #       with:
+  #         setupOnly: true
+  #         vcpkgGitCommitId: ${{ env.VCPKG_COMMIT_ID }}
 
-      - name: Install vcpkg dependencies
-        run: |
-          cd C:\
-          git clone https://github.com/Kingtous/rustdesk_thirdpary_lib --depth=1 
+  #     - name: Install vcpkg dependencies
+  #       run: |
+  #         cd C:\
+  #         git clone https://github.com/Kingtous/rustdesk_thirdpary_lib --depth=1 
 
-      - name: Build rustdesk
-        id: build
-        shell: bash
-        env:
-          VCPKG_ROOT: C:\rustdesk_thirdpary_lib\vcpkg
-        run: |
-          python3 res/inline-sciter.py
-          # Patch sciter x86
-          sed -i 's/branch = "dyn"/branch = "dyn_x86"/g' ./Cargo.toml
-          cargo build --features inline --release --bins
-          mkdir -p ./Release
-          mv ./target/release/rustdesk.exe ./Release/rustdesk.exe
-          curl -LJ -o ./Release/sciter.dll https://github.com/c-smile/sciter-sdk/raw/master/bin.win/x32/sciter.dll
-          echo "output_folder=./Release" >> $GITHUB_OUTPUT
+  #     - name: Build rustdesk
+  #       id: build
+  #       shell: bash
+  #       env:
+  #         VCPKG_ROOT: C:\rustdesk_thirdpary_lib\vcpkg
+  #       run: |
+  #         python3 res/inline-sciter.py
+  #         # Patch sciter x86
+  #         sed -i 's/branch = "dyn"/branch = "dyn_x86"/g' ./Cargo.toml
+  #         cargo build --features inline --release --bins
+  #         mkdir -p ./Release
+  #         mv ./target/release/rustdesk.exe ./Release/rustdesk.exe
+  #         curl -LJ -o ./Release/sciter.dll https://github.com/c-smile/sciter-sdk/raw/master/bin.win/x32/sciter.dll
+  #         echo "output_folder=./Release" >> $GITHUB_OUTPUT
 
-      - name: find Runner.res
-        # Windows: find Runner.res (compiled from ./flutter/windows/runner/Runner.rc), copy to ./Runner.res
-        # Runner.rc does not contain actual version, but Runner.res does
-        continue-on-error: true
-        shell: bash
-        run: |
-          runner_res=$(find . -name "Runner.res");
-          if [ "$runner_res" == "" ]; then
-            echo "Runner.res: not found";
-          else
-            echo "Runner.res: $runner_res";
-            cp $runner_res ./libs/portable/Runner.res;
-            echo "list ./libs/portable/Runner.res";
-            ls -l ./libs/portable/Runner.res;
-          fi
+  #     - name: find Runner.res
+  #       # Windows: find Runner.res (compiled from ./flutter/windows/runner/Runner.rc), copy to ./Runner.res
+  #       # Runner.rc does not contain actual version, but Runner.res does
+  #       continue-on-error: true
+  #       shell: bash
+  #       run: |
+  #         runner_res=$(find . -name "Runner.res");
+  #         if [ "$runner_res" == "" ]; then
+  #           echo "Runner.res: not found";
+  #         else
+  #           echo "Runner.res: $runner_res";
+  #           cp $runner_res ./libs/portable/Runner.res;
+  #           echo "list ./libs/portable/Runner.res";
+  #           ls -l ./libs/portable/Runner.res;
+  #         fi
 
-      - name: Sign rustdesk files
-        if: env.UPLOAD_ARTIFACT == 'true' && env.SIGN_BASE_URL != ''
-        shell: bash
-        run: |
-           pip3 install requests argparse
-           BASE_URL=${{ secrets.SIGN_BASE_URL }} SECRET_KEY=${{ secrets.SIGN_SECRET_KEY }} python3 res/job.py sign_files ./Release/
+  #     - name: Sign rustdesk files
+  #       if: env.UPLOAD_ARTIFACT == 'true' && env.SIGN_BASE_URL != ''
+  #       shell: bash
+  #       run: |
+  #          pip3 install requests argparse
+  #          BASE_URL=${{ secrets.SIGN_BASE_URL }} SECRET_KEY=${{ secrets.SIGN_SECRET_KEY }} python3 res/job.py sign_files ./Release/
 
-      - name: Build self-extracted executable
-        shell: bash
-        run: |
-          pushd ./libs/portable
-          pip3 install -r requirements.txt
-          python3 ./generate.py -f ../../Release/ -o . -e ../../Release/rustdesk.exe
-          popd
-          mkdir -p ./SignOutput
-          mv ./target/release/rustdesk-portable-packer.exe ./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.exe
+  #     - name: Build self-extracted executable
+  #       shell: bash
+  #       run: |
+  #         pushd ./libs/portable
+  #         pip3 install -r requirements.txt
+  #         python3 ./generate.py -f ../../Release/ -o . -e ../../Release/rustdesk.exe
+  #         popd
+  #         mkdir -p ./SignOutput
+  #         mv ./target/release/rustdesk-portable-packer.exe ./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.exe
       
-      - name: Sign rustdesk self-extracted file
-        if: env.UPLOAD_ARTIFACT == 'true' && env.SIGN_BASE_URL != ''
-        shell: bash
-        run: |
-           BASE_URL=${{ secrets.SIGN_BASE_URL }} SECRET_KEY=${{ secrets.SIGN_SECRET_KEY }} python3 res/job.py sign_files ./SignOutput/
+  #     - name: Sign rustdesk self-extracted file
+  #       if: env.UPLOAD_ARTIFACT == 'true' && env.SIGN_BASE_URL != ''
+  #       shell: bash
+  #       run: |
+  #          BASE_URL=${{ secrets.SIGN_BASE_URL }} SECRET_KEY=${{ secrets.SIGN_SECRET_KEY }} python3 res/job.py sign_files ./SignOutput/
 
-      - name: Publish Release
-        uses: softprops/action-gh-release@v1
-        if: env.UPLOAD_ARTIFACT == 'true'
-        with:
-          prerelease: true
-          tag_name: ${{ env.TAG_NAME }}
-          files: |
-            ./SignOutput/rustdesk-*.exe
+  #     - name: Publish Release
+  #       uses: softprops/action-gh-release@v1
+  #       if: env.UPLOAD_ARTIFACT == 'true'
+  #       with:
+  #         prerelease: true
+  #         tag_name: ${{ env.TAG_NAME }}
+  #         files: |
+  #           ./SignOutput/rustdesk-*.exe
 
-  build-for-macOS:
-    name: ${{ matrix.job.target }} (${{ matrix.job.os }}) [${{ matrix.job.extra-build-args }}]
-    runs-on: ${{ matrix.job.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        job:
-          - {
-              target: x86_64-apple-darwin,
-              os: macos-latest,
-              extra-build-args: "",
-              arch: x86_64
-            }
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v3
+  # build-for-macOS:
+  #   name: ${{ matrix.job.target }} (${{ matrix.job.os }}) [${{ matrix.job.extra-build-args }}]
+  #   runs-on: ${{ matrix.job.os }}
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       job:
+  #         - {
+  #             target: x86_64-apple-darwin,
+  #             os: macos-latest,
+  #             extra-build-args: "",
+  #             arch: x86_64
+  #           }
+  #   steps:
+  #     - name: Checkout source code
+  #       uses: actions/checkout@v3
 
-      - name: Import the codesign cert
-        if: env.MACOS_P12_BASE64 != null
-        uses: apple-actions/import-codesign-certs@v1
-        with: 
-          p12-file-base64: ${{ secrets.MACOS_P12_BASE64 }}
-          p12-password: ${{ secrets.MACOS_P12_PASSWORD }}
-          keychain: rustdesk
+  #     - name: Import the codesign cert
+  #       if: env.MACOS_P12_BASE64 != null
+  #       uses: apple-actions/import-codesign-certs@v1
+  #       with: 
+  #         p12-file-base64: ${{ secrets.MACOS_P12_BASE64 }}
+  #         p12-password: ${{ secrets.MACOS_P12_PASSWORD }}
+  #         keychain: rustdesk
       
-      - name: Check sign and import sign key
-        if: env.MACOS_P12_BASE64 != null
-        run: |
-          security default-keychain -s rustdesk.keychain
-          security find-identity -v
+  #     - name: Check sign and import sign key
+  #       if: env.MACOS_P12_BASE64 != null
+  #       run: |
+  #         security default-keychain -s rustdesk.keychain
+  #         security find-identity -v
 
-      - name: Import notarize key
-        if: env.MACOS_P12_BASE64 != null
-        uses: timheuer/base64-to-file@v1.2
-        with:
-          # https://gregoryszorc.com/docs/apple-codesign/stable/apple_codesign_rcodesign.html#notarizing-and-stapling
-          fileName: rustdesk.json
-          fileDir: ${{ github.workspace }}
-          encodedString: ${{ secrets.MACOS_NOTARIZE_JSON }}
+  #     - name: Import notarize key
+  #       if: env.MACOS_P12_BASE64 != null
+  #       uses: timheuer/base64-to-file@v1.2
+  #       with:
+  #         # https://gregoryszorc.com/docs/apple-codesign/stable/apple_codesign_rcodesign.html#notarizing-and-stapling
+  #         fileName: rustdesk.json
+  #         fileDir: ${{ github.workspace }}
+  #         encodedString: ${{ secrets.MACOS_NOTARIZE_JSON }}
           
-      - name: Install rcodesign tool
-        if: env.MACOS_P12_BASE64 != null
-        shell: bash
-        run: | 
-          pushd /tmp
-          wget https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F0.22.0/apple-codesign-0.22.0-macos-universal.tar.gz
-          tar -zxvf apple-codesign-0.22.0-macos-universal.tar.gz
-          mv apple-codesign-0.22.0-macos-universal/rcodesign /usr/local/bin
-          popd
+  #     - name: Install rcodesign tool
+  #       if: env.MACOS_P12_BASE64 != null
+  #       shell: bash
+  #       run: | 
+  #         pushd /tmp
+  #         wget https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F0.22.0/apple-codesign-0.22.0-macos-universal.tar.gz
+  #         tar -zxvf apple-codesign-0.22.0-macos-universal.tar.gz
+  #         mv apple-codesign-0.22.0-macos-universal/rcodesign /usr/local/bin
+  #         popd
 
-      - name: Install build runtime
-        run: |
-          brew install llvm create-dmg nasm yasm cmake gcc wget ninja pkg-config
+  #     - name: Install build runtime
+  #       run: |
+  #         brew install llvm create-dmg nasm yasm cmake gcc wget ninja pkg-config
 
-      - name: Install flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: "stable"
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+  #     - name: Install flutter
+  #       uses: subosito/flutter-action@v2
+  #       with:
+  #         channel: "stable"
+  #         flutter-version: ${{ env.FLUTTER_VERSION }}
 
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: ${{ matrix.job.target }}
-          override: true
-          profile: minimal # minimal component installation (ie, no documentation)
+  #     - name: Install Rust toolchain
+  #       uses: actions-rs/toolchain@v1
+  #       with:
+  #         toolchain: stable
+  #         target: ${{ matrix.job.target }}
+  #         override: true
+  #         profile: minimal # minimal component installation (ie, no documentation)
 
-      - uses: Swatinem/rust-cache@v2
-        with:
-          prefix-key: ${{ matrix.job.os }}
+  #     - uses: Swatinem/rust-cache@v2
+  #       with:
+  #         prefix-key: ${{ matrix.job.os }}
 
-      - name: Install flutter rust bridge deps
-        shell: bash
-        run: |
-          cargo install flutter_rust_bridge_codegen --version ${{ env.FLUTTER_RUST_BRIDGE_VERSION }} --features "uuid"
-          pushd flutter && flutter pub get && popd
-          ~/.cargo/bin/flutter_rust_bridge_codegen --rust-input ./src/flutter_ffi.rs --dart-output ./flutter/lib/generated_bridge.dart --c-output ./flutter/macos/Runner/bridge_generated.h
+  #     - name: Install flutter rust bridge deps
+  #       shell: bash
+  #       run: |
+  #         cargo install flutter_rust_bridge_codegen --version ${{ env.FLUTTER_RUST_BRIDGE_VERSION }} --features "uuid"
+  #         pushd flutter && flutter pub get && popd
+  #         ~/.cargo/bin/flutter_rust_bridge_codegen --rust-input ./src/flutter_ffi.rs --dart-output ./flutter/lib/generated_bridge.dart --c-output ./flutter/macos/Runner/bridge_generated.h
 
-      - name: Restore from cache and install vcpkg
-        uses: lukka/run-vcpkg@v7
-        with:
-          setupOnly: true
-          vcpkgGitCommitId: ${{ env.VCPKG_COMMIT_ID }}
+  #     - name: Restore from cache and install vcpkg
+  #       uses: lukka/run-vcpkg@v7
+  #       with:
+  #         setupOnly: true
+  #         vcpkgGitCommitId: ${{ env.VCPKG_COMMIT_ID }}
 
-      - name: Install vcpkg dependencies
-        run: |
-          $VCPKG_ROOT/vcpkg install libvpx libyuv opus aom
+  #     - name: Install vcpkg dependencies
+  #       run: |
+  #         $VCPKG_ROOT/vcpkg install libvpx libyuv opus aom
 
-      - name: Show version information (Rust, cargo, Clang)
-        shell: bash
-        run: |
-          clang --version || true
-          rustup -V
-          rustup toolchain list
-          rustup default
-          cargo -V
-          rustc -V
+  #     - name: Show version information (Rust, cargo, Clang)
+  #       shell: bash
+  #       run: |
+  #         clang --version || true
+  #         rustup -V
+  #         rustup toolchain list
+  #         rustup default
+  #         cargo -V
+  #         rustc -V
 
-      - name: Build rustdesk
-        run: |
-          # --hwcodec not supported on macos yet
-          ./build.py --flutter ${{ matrix.job.extra-build-args }}
+  #     - name: Build rustdesk
+  #       run: |
+  #         # --hwcodec not supported on macos yet
+  #         ./build.py --flutter ${{ matrix.job.extra-build-args }}
 
-      - name: Codesign app and create signed dmg
-        if: env.MACOS_P12_BASE64 != null
-        run: |
-          security default-keychain -s rustdesk.keychain
-          security unlock-keychain -p ${{ secrets.MACOS_P12_PASSWORD }} rustdesk.keychain
-          # start sign the rustdesk.app and dmg
-          rm rustdesk-${{ env.VERSION }}.dmg || true
-          codesign --force --options runtime -s ${{ secrets.MACOS_CODESIGN_IDENTITY }} --deep --strict ./flutter/build/macos/Build/Products/Release/RustDesk.app -vvv
-          create-dmg --icon "RustDesk.app" 200 190 --hide-extension "RustDesk.app" --window-size 800 400 --app-drop-link 600 185 rustdesk-${{ env.VERSION }}.dmg ./flutter/build/macos/Build/Products/Release/RustDesk.app
-          codesign --force --options runtime -s ${{ secrets.MACOS_CODESIGN_IDENTITY }} --deep --strict rustdesk-${{ env.VERSION }}.dmg -vvv
-          # notarize the rustdesk-${{ env.VERSION }}.dmg
-          rcodesign notary-submit --api-key-path ${{ github.workspace }}/rustdesk.json  --staple rustdesk-${{ env.VERSION }}.dmg
+  #     - name: Codesign app and create signed dmg
+  #       if: env.MACOS_P12_BASE64 != null
+  #       run: |
+  #         security default-keychain -s rustdesk.keychain
+  #         security unlock-keychain -p ${{ secrets.MACOS_P12_PASSWORD }} rustdesk.keychain
+  #         # start sign the rustdesk.app and dmg
+  #         rm rustdesk-${{ env.VERSION }}.dmg || true
+  #         codesign --force --options runtime -s ${{ secrets.MACOS_CODESIGN_IDENTITY }} --deep --strict ./flutter/build/macos/Build/Products/Release/RustDesk.app -vvv
+  #         create-dmg --icon "RustDesk.app" 200 190 --hide-extension "RustDesk.app" --window-size 800 400 --app-drop-link 600 185 rustdesk-${{ env.VERSION }}.dmg ./flutter/build/macos/Build/Products/Release/RustDesk.app
+  #         codesign --force --options runtime -s ${{ secrets.MACOS_CODESIGN_IDENTITY }} --deep --strict rustdesk-${{ env.VERSION }}.dmg -vvv
+  #         # notarize the rustdesk-${{ env.VERSION }}.dmg
+  #         rcodesign notary-submit --api-key-path ${{ github.workspace }}/rustdesk.json  --staple rustdesk-${{ env.VERSION }}.dmg
 
-      - name: Rename rustdesk
-        run: |
-          for name in rustdesk*??.dmg; do
-              mv "$name" "${name%%.dmg}-${{ matrix.job.arch }}.dmg"
-          done
+  #     - name: Rename rustdesk
+  #       run: |
+  #         for name in rustdesk*??.dmg; do
+  #             mv "$name" "${name%%.dmg}-${{ matrix.job.arch }}.dmg"
+  #         done
 
-      - name: Publish DMG package
-        if: env.UPLOAD_ARTIFACT == 'true'
-        uses: softprops/action-gh-release@v1
-        with:
-          prerelease: true
-          tag_name: ${{ env.TAG_NAME }}
-          files: |
-            rustdesk*-${{ matrix.job.arch }}.dmg
+  #     - name: Publish DMG package
+  #       if: env.UPLOAD_ARTIFACT == 'true'
+  #       uses: softprops/action-gh-release@v1
+  #       with:
+  #         prerelease: true
+  #         tag_name: ${{ env.TAG_NAME }}
+  #         files: |
+  #           rustdesk*-${{ matrix.job.arch }}.dmg
 
   build-vcpkg-deps-linux:
     uses: ./.github/workflows/vcpkg-deps-linux.yml
@@ -386,7 +387,7 @@ jobs:
   generate-bridge-linux:
     uses: ./.github/workflows/bridge.yml
 
-  build-rustdesk-ios:
+  # build-rustdesk-ios:
     if: ${{ inputs.upload-artifact }}
     needs: [generate-bridge-linux]
     name: build rustdesk ios ipa ${{ matrix.job.target }} (${{ matrix.job.os }}) [${{ matrix.job.extra-build-features }}]
@@ -477,7 +478,7 @@ jobs:
       #       flutter/build/ios/ipa/*.ipa
     
 
-  build-rustdesk-android:
+  # build-rustdesk-android:
     needs: [generate-bridge-linux]
     name: build rustdesk android apk ${{ matrix.job.target }} (${{ matrix.job.os }}) [${{ matrix.job.extra-build-features }}]
     runs-on: ${{ matrix.job.os }}
@@ -925,7 +926,8 @@ jobs:
           name: librustdesk-${{ matrix.job.arch }}-${{ matrix.job.extra-build-features }}.so
           path: target/release/liblibrustdesk.so
 
-  build-rustdesk-sciter-arm:
+  # не работает сервер
+  # build-rustdesk-sciter-arm:
     if: ${{ inputs.upload-artifact }}
     needs: [build-vcpkg-deps-linux]
     name: build-rustdesk(sciter) ${{ matrix.job.target }} (${{ matrix.job.os }}) [${{ matrix.job.extra-build-features }}]
@@ -1607,66 +1609,66 @@ jobs:
   #         files: |
   #           flatpak/rustdesk-${{ env.VERSION }}-${{ matrix.job.target }}.flatpak
 
-  build-flatpak-amd64:
-    name: Build Flatpak
-    needs: [build-rustdesk-linux-amd64]
-    runs-on: ubuntu-20.04
-    strategy:
-      fail-fast: false
-      matrix:
-        job:
-          - { target: x86_64-unknown-linux-gnu, os: ubuntu-18.04, arch: x86_64 }
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v3
+  # build-flatpak-amd64:
+  #   name: Build Flatpak
+  #   needs: [build-rustdesk-linux-amd64]
+  #   runs-on: ubuntu-20.04
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       job:
+  #         - { target: x86_64-unknown-linux-gnu, os: ubuntu-18.04, arch: x86_64 }
+  #   steps:
+  #     - name: Checkout source code
+  #       uses: actions/checkout@v3
 
-      - name: Download Binary
-        uses: actions/download-artifact@master
-        with:
-          name: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.deb
-          path: .
+  #     - name: Download Binary
+  #       uses: actions/download-artifact@master
+  #       with:
+  #         name: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.deb
+  #         path: .
 
-      - name: Rename Binary
-        run: |
-          mv rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.deb rustdesk-${{ env.VERSION }}.deb
+  #     - name: Rename Binary
+  #       run: |
+  #         mv rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.deb rustdesk-${{ env.VERSION }}.deb
 
-      - uses: rustdesk-org/run-on-arch-action@amd64-support
-        name: Build rustdesk flatpak package for ${{ matrix.job.arch }}
-        id: rpm
-        with:
-          arch: ${{ matrix.job.arch }}
-          distro: ubuntu18.04
-          githubToken: ${{ github.token }}
-          setup: |
-            ls -l "${PWD}"
-          dockerRunArgs: |
-            --volume "${PWD}:/workspace"
-          shell: /bin/bash
-          install: |
-            apt update -y
-            apt install -y rpm git wget curl
-          run: |
-            # disable git safe.directory
-            git config --global --add safe.directory "*"
-            pushd /workspace
-            # install 
-            apt update -y
-            apt install -y flatpak flatpak-builder cmake g++ gcc git curl wget nasm yasm libgtk-3-dev git
-            # flatpak deps
-            flatpak --user remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-            flatpak --user install -y flathub org.freedesktop.Platform/${{ matrix.job.arch }}/23.08
-            flatpak --user install -y flathub org.freedesktop.Sdk/${{ matrix.job.arch }}/23.08
-            # package
-            pushd flatpak
-            git clone https://github.com/flathub/shared-modules.git --depth=1
-            flatpak-builder --user --force-clean --repo=repo ./build ./rustdesk.json
-            flatpak build-bundle ./repo rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.flatpak com.rustdesk.RustDesk
+  #     - uses: rustdesk-org/run-on-arch-action@amd64-support
+  #       name: Build rustdesk flatpak package for ${{ matrix.job.arch }}
+  #       id: rpm
+  #       with:
+  #         arch: ${{ matrix.job.arch }}
+  #         distro: ubuntu18.04
+  #         githubToken: ${{ github.token }}
+  #         setup: |
+  #           ls -l "${PWD}"
+  #         dockerRunArgs: |
+  #           --volume "${PWD}:/workspace"
+  #         shell: /bin/bash
+  #         install: |
+  #           apt update -y
+  #           apt install -y rpm git wget curl
+  #         run: |
+  #           # disable git safe.directory
+  #           git config --global --add safe.directory "*"
+  #           pushd /workspace
+  #           # install 
+  #           apt update -y
+  #           apt install -y flatpak flatpak-builder cmake g++ gcc git curl wget nasm yasm libgtk-3-dev git
+  #           # flatpak deps
+  #           flatpak --user remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+  #           flatpak --user install -y flathub org.freedesktop.Platform/${{ matrix.job.arch }}/23.08
+  #           flatpak --user install -y flathub org.freedesktop.Sdk/${{ matrix.job.arch }}/23.08
+  #           # package
+  #           pushd flatpak
+  #           git clone https://github.com/flathub/shared-modules.git --depth=1
+  #           flatpak-builder --user --force-clean --repo=repo ./build ./rustdesk.json
+  #           flatpak build-bundle ./repo rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.flatpak com.rustdesk.RustDesk
 
-      - name: Publish flatpak package
-        uses: softprops/action-gh-release@v1
-        if: env.UPLOAD_ARTIFACT == 'true'
-        with:
-          prerelease: true
-          tag_name: ${{ env.TAG_NAME }}
-          files: |
-            flatpak/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.flatpak
+  #     - name: Publish flatpak package
+  #       uses: softprops/action-gh-release@v1
+  #       if: env.UPLOAD_ARTIFACT == 'true'
+  #       with:
+  #         prerelease: true
+  #         tag_name: ${{ env.TAG_NAME }}
+  #         files: |
+  #           flatpak/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.flatpak
