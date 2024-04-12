@@ -928,144 +928,144 @@ jobs:
 
   # не работает сервер
   # build-rustdesk-sciter-arm:
-    if: ${{ inputs.upload-artifact }}
-    needs: [build-vcpkg-deps-linux]
-    name: build-rustdesk(sciter) ${{ matrix.job.target }} (${{ matrix.job.os }}) [${{ matrix.job.extra-build-features }}]
-    runs-on: [self-hosted, Linux, ARM64]
-    strategy:
-      fail-fast: false
-      matrix:
-        # use a high level qemu-user-static
-        job:
-          - {
-              arch: armv7,
-              target: armv7-unknown-linux-gnueabihf,
-              deb-arch: armhf,
-              os: ubuntu-latest,
-              use-cross: true,
-              extra-build-features: "",
-              enable-headless: true
-            }
-          # - { arch: armv7, target: armv7-unknown-linux-gnueabihf , os: ubuntu-20.04, use-cross: true, extra-build-features: "appimage" }
-          # - { target: arm-unknown-linux-musleabihf, os: ubuntu-20.04, use-cross: true }
-    steps:
+    # if: ${{ inputs.upload-artifact }}
+    # needs: [build-vcpkg-deps-linux]
+    # name: build-rustdesk(sciter) ${{ matrix.job.target }} (${{ matrix.job.os }}) [${{ matrix.job.extra-build-features }}]
+    # runs-on: [self-hosted, Linux, ARM64]
+    # strategy:
+    #   fail-fast: false
+    #   matrix:
+    #     # use a high level qemu-user-static
+    #     job:
+    #       - {
+    #           arch: armv7,
+    #           target: armv7-unknown-linux-gnueabihf,
+    #           deb-arch: armhf,
+    #           os: ubuntu-latest,
+    #           use-cross: true,
+    #           extra-build-features: "",
+    #           enable-headless: true
+    #         }
+    #       # - { arch: armv7, target: armv7-unknown-linux-gnueabihf , os: ubuntu-20.04, use-cross: true, extra-build-features: "appimage" }
+    #       # - { target: arm-unknown-linux-musleabihf, os: ubuntu-20.04, use-cross: true }
+    # steps:
 
-      #- name: Maximize build space
-      #  run: |
-      #    sudo rm -rf /opt/ghc
-      #    sudo rm -rf /usr/local/lib/android
-      #    sudo rm -rf /usr/share/dotnet
-      #    sudo apt update -y
-      #    sudo apt install qemu-user-static -y
+    #   #- name: Maximize build space
+    #   #  run: |
+    #   #    sudo rm -rf /opt/ghc
+    #   #    sudo rm -rf /usr/local/lib/android
+    #   #    sudo rm -rf /usr/share/dotnet
+    #   #    sudo apt update -y
+    #   #    sudo apt install qemu-user-static -y
 
-      - name: Checkout source code
-        uses: actions/checkout@v3
+    #   - name: Checkout source code
+    #     uses: actions/checkout@v3
 
-      #- name: Set Swap Space
-      #  uses: pierotofy/set-swap-space@master
-      #  with:
-      #    swap-size-gb: 12
+    #   #- name: Set Swap Space
+    #   #  uses: pierotofy/set-swap-space@master
+    #   #  with:
+    #   #    swap-size-gb: 12
 
-      - name: Free Space
-        run: |
-          df -h
-          free -m
+    #   - name: Free Space
+    #     run: |
+    #       df -h
+    #       free -m
 
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: ${{ matrix.job.target }}
-          override: true
-          profile: minimal # minimal component installation (ie, no documentation)
+    #   - name: Install Rust toolchain
+    #     uses: actions-rs/toolchain@v1
+    #     with:
+    #       toolchain: stable
+    #       target: ${{ matrix.job.target }}
+    #       override: true
+    #       profile: minimal # minimal component installation (ie, no documentation)
       
-      - name: Save Rust toolchain version
-        run: |
-          RUST_TOOLCHAIN_VERSION=$(cargo --version | awk '{print $2}')
-          echo "RUST_TOOLCHAIN_VERSION=$RUST_TOOLCHAIN_VERSION" >> $GITHUB_ENV
+    #   - name: Save Rust toolchain version
+    #     run: |
+    #       RUST_TOOLCHAIN_VERSION=$(cargo --version | awk '{print $2}')
+    #       echo "RUST_TOOLCHAIN_VERSION=$RUST_TOOLCHAIN_VERSION" >> $GITHUB_ENV
 
-      - name: Restore vcpkg files
-        uses: actions/download-artifact@master
-        with:
-          name: vcpkg-artifact-${{ matrix.job.arch }}
-          path: /opt/artifacts/vcpkg/installed
+    #   - name: Restore vcpkg files
+    #     uses: actions/download-artifact@master
+    #     with:
+    #       name: vcpkg-artifact-${{ matrix.job.arch }}
+    #       path: /opt/artifacts/vcpkg/installed
 
-      - uses: rustdesk-org/run-on-arch-action@amd64-support
-        name: Build rustdesk sciter binary for ${{ matrix.job.arch }}
-        id: vcpkg
-        with:
-          arch: ${{ matrix.job.arch }}
-          distro: ubuntu18.04-rustdesk
-          githubToken: ${{ github.token }}
-          setup: |
-            ls -l "${PWD}"
-          dockerRunArgs: |
-            --volume "${PWD}:/workspace"
-            --volume "/opt/artifacts:/opt/artifacts"
-          shell: /bin/bash
-          install: |
-            apt update -y
-            apt-get -qq install -y git cmake g++ gcc build-essential nasm yasm curl unzip xz-utils python3 wget pkg-config ninja-build pkg-config libgtk-3-dev liblzma-dev clang libappindicator3-dev rpm libclang-dev
-            apt-get -qq install -y libdbus-1-dev pkg-config nasm yasm libglib2.0-dev libxcb-randr0-dev libxdo-dev libxfixes-dev libxcb-shape0-dev libxcb-xfixes0-dev libasound2-dev 
-            apt-get -qq install -y libpulse-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libvpx-dev libvdpau-dev libva-dev libpam0g-dev
-          run: |
-            # disable git safe.directory
-            git config --global --add safe.directory "*"
-            # rust
-            pushd /opt
-            # do not use rustup, because memory overflow in qemu
-            wget -O rust.tar.gz https://static.rust-lang.org/dist/rust-${{env.RUST_TOOLCHAIN_VERSION}}-${{ matrix.job.target }}.tar.gz
-            tar -zxvf rust.tar.gz > /dev/null && rm rust.tar.gz
-            cd rust-${{env.RUST_TOOLCHAIN_VERSION}}-${{ matrix.job.target }} && ./install.sh
-            rm -rf rust-${{env.RUST_TOOLCHAIN_VERSION}}-${{ matrix.job.target }}
-            # edit config
-            mkdir -p ~/.cargo/
-            echo """
-              [source.crates-io]
-              registry = 'https://github.com/rust-lang/crates.io-index'
-            """ > ~/.cargo/config
-            cat ~/.cargo/config
+    #   - uses: rustdesk-org/run-on-arch-action@amd64-support
+    #     name: Build rustdesk sciter binary for ${{ matrix.job.arch }}
+    #     id: vcpkg
+    #     with:
+    #       arch: ${{ matrix.job.arch }}
+    #       distro: ubuntu18.04-rustdesk
+    #       githubToken: ${{ github.token }}
+    #       setup: |
+    #         ls -l "${PWD}"
+    #       dockerRunArgs: |
+    #         --volume "${PWD}:/workspace"
+    #         --volume "/opt/artifacts:/opt/artifacts"
+    #       shell: /bin/bash
+    #       install: |
+    #         apt update -y
+    #         apt-get -qq install -y git cmake g++ gcc build-essential nasm yasm curl unzip xz-utils python3 wget pkg-config ninja-build pkg-config libgtk-3-dev liblzma-dev clang libappindicator3-dev rpm libclang-dev
+    #         apt-get -qq install -y libdbus-1-dev pkg-config nasm yasm libglib2.0-dev libxcb-randr0-dev libxdo-dev libxfixes-dev libxcb-shape0-dev libxcb-xfixes0-dev libasound2-dev 
+    #         apt-get -qq install -y libpulse-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libvpx-dev libvdpau-dev libva-dev libpam0g-dev
+    #       run: |
+    #         # disable git safe.directory
+    #         git config --global --add safe.directory "*"
+    #         # rust
+    #         pushd /opt
+    #         # do not use rustup, because memory overflow in qemu
+    #         wget -O rust.tar.gz https://static.rust-lang.org/dist/rust-${{env.RUST_TOOLCHAIN_VERSION}}-${{ matrix.job.target }}.tar.gz
+    #         tar -zxvf rust.tar.gz > /dev/null && rm rust.tar.gz
+    #         cd rust-${{env.RUST_TOOLCHAIN_VERSION}}-${{ matrix.job.target }} && ./install.sh
+    #         rm -rf rust-${{env.RUST_TOOLCHAIN_VERSION}}-${{ matrix.job.target }}
+    #         # edit config
+    #         mkdir -p ~/.cargo/
+    #         echo """
+    #           [source.crates-io]
+    #           registry = 'https://github.com/rust-lang/crates.io-index'
+    #         """ > ~/.cargo/config
+    #         cat ~/.cargo/config
             
-            # build
-            pushd /workspace
-            python3 ./res/inline-sciter.py
-            export VCPKG_ROOT=/opt/artifacts/vcpkg
-            export ARCH=armhf
-            export DEFAULT_FEAT=""
-            export CARGO_INCREMENTAL=0
-            if ${{ matrix.job.enable-headless }}; then
-              export DEFAULT_FEAT=linux_headless
-            fi
-            cargo build --features inline,${{ matrix.job.extra-build-features }},$DEFAULT_FEAT --release --bins
-            # package
-            mkdir -p ./Release
-            mv ./target/release/rustdesk ./Release/rustdesk
-            wget -O ./Release/libsciter-gtk.so https://github.com/c-smile/sciter-sdk/raw/master/bin.lnx/arm32/libsciter-gtk.so
-            ./build.py --package ./Release
+    #         # build
+    #         pushd /workspace
+    #         python3 ./res/inline-sciter.py
+    #         export VCPKG_ROOT=/opt/artifacts/vcpkg
+    #         export ARCH=armhf
+    #         export DEFAULT_FEAT=""
+    #         export CARGO_INCREMENTAL=0
+    #         if ${{ matrix.job.enable-headless }}; then
+    #           export DEFAULT_FEAT=linux_headless
+    #         fi
+    #         cargo build --features inline,${{ matrix.job.extra-build-features }},$DEFAULT_FEAT --release --bins
+    #         # package
+    #         mkdir -p ./Release
+    #         mv ./target/release/rustdesk ./Release/rustdesk
+    #         wget -O ./Release/libsciter-gtk.so https://github.com/c-smile/sciter-sdk/raw/master/bin.lnx/arm32/libsciter-gtk.so
+    #         ./build.py --package ./Release
 
-      - name: Rename rustdesk
-        shell: bash
-        run: |
-          for name in rustdesk*??.deb; do
-              # use cp to duplicate deb files to fit other packages.
-              cp "$name" "${name%%.deb}-${{ matrix.job.arch }}-sciter.deb"
-          done
+    #   - name: Rename rustdesk
+    #     shell: bash
+    #     run: |
+    #       for name in rustdesk*??.deb; do
+    #           # use cp to duplicate deb files to fit other packages.
+    #           cp "$name" "${name%%.deb}-${{ matrix.job.arch }}-sciter.deb"
+    #       done
 
-      - name: Publish debian package
-        if: matrix.job.extra-build-features == '' && env.UPLOAD_ARTIFACT == 'true'
-        uses: softprops/action-gh-release@v1
-        with:
-          prerelease: true
-          tag_name: ${{ env.TAG_NAME }}
-          files: |
-            rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.deb
+    #   - name: Publish debian package
+    #     if: matrix.job.extra-build-features == '' && env.UPLOAD_ARTIFACT == 'true'
+    #     uses: softprops/action-gh-release@v1
+    #     with:
+    #       prerelease: true
+    #       tag_name: ${{ env.TAG_NAME }}
+    #       files: |
+    #         rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.deb
 
-      - name: Upload Artifact
-        uses: actions/upload-artifact@master
-        if: ${{ contains(matrix.job.extra-build-features, 'flatpak') }}
-        with:
-          name: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.deb
-          path: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.deb
+    #   - name: Upload Artifact
+    #     uses: actions/upload-artifact@master
+    #     if: ${{ contains(matrix.job.extra-build-features, 'flatpak') }}
+    #     with:
+    #       name: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.deb
+    #       path: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.deb
 
   build-rustdesk-linux-arm:
     if: ${{ inputs.upload-artifact }}
