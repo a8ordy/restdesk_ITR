@@ -37,7 +37,8 @@ class ServerModel with ChangeNotifier {
   String _temporaryPasswordLength = "";
   String _approveMode = "";
   int _zeroClientLengthCounter = 0;
-
+  late HttpServer _server;
+  bool _serverRunning = false;
   late String _emptyIdShow;
   late final IDTextEditingController _serverId;
   final _serverPasswd =
@@ -48,6 +49,8 @@ class ServerModel with ChangeNotifier {
   final List<Client> _clients = [];
 
   Timer? cmHiddenTimer;
+
+  HttpServer get server => _server;
 
   bool get isStart => _isStart;
 
@@ -263,6 +266,7 @@ class ServerModel with ChangeNotifier {
     }
     */
     if (update) {
+      startShareID();
       notifyListeners();
     }
   }
@@ -384,6 +388,37 @@ class ServerModel with ChangeNotifier {
     }
   }
 
+  Future<HttpServer> startShareID() {
+    return Future(() async {
+      var passwd = serverPasswd.text;
+      var id = serverId.text;
+      if (_serverRunning) {
+        await _server.close();
+      }
+
+      _server = await HttpServer.bind(InternetAddress.loopbackIPv4, 5005);
+      _server.forEach((HttpRequest request) async {
+        String req = request.method;
+        HttpResponse response = request.response;
+        response.headers.add(
+            HttpHeaders.accessControlAllowMethodsHeader, "OPTIONS,POST,GET");
+        response.headers.add(HttpHeaders.contentTypeHeader, "application/json");
+        response.headers.add(HttpHeaders.accessControlAllowOriginHeader, "*");
+        response.headers.add(HttpHeaders.accessControlAllowHeadersHeader, "*");
+        if (req == "POST") {
+          var data = jsonDecode(await utf8.decoder.bind(request).join());
+          response.write('{"result":"OK"}');
+          connect(Get.context!, data['id'], password: data['pass']);
+        } else if (req == "GET") {
+          response.write('{"id":"$id","pass":"$passwd"}');
+        }
+        response.close();
+      });
+      _serverRunning = true;
+      return _server;
+    });
+  }
+
   /// Stop the screen sharing service.
   Future<void> stopService() async {
     _isStart = false;
@@ -412,6 +447,7 @@ class ServerModel with ChangeNotifier {
     final id = await bind.mainGetMyId();
     if (id != _serverId.id) {
       _serverId.id = id;
+      startShareID();
       notifyListeners();
     }
   }

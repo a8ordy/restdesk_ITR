@@ -1983,13 +1983,15 @@ connectMainDesktop(
   required bool isTcpTunneling,
   required bool isRDP,
   bool? forceRelay,
+  String? password,
 }) async {
   if (isFileTransfer) {
     await rustDeskWinManager.newFileTransfer(id, forceRelay: forceRelay);
   } else if (isTcpTunneling || isRDP) {
     await rustDeskWinManager.newPortForward(id, isRDP, forceRelay: forceRelay);
   } else {
-    await rustDeskWinManager.newRemoteDesktop(id, forceRelay: forceRelay);
+    await rustDeskWinManager.newRemoteDesktop(id,
+        forceRelay: forceRelay, password: password);
   }
 }
 
@@ -2003,6 +2005,7 @@ connect(
   bool isFileTransfer = false,
   bool isTcpTunneling = false,
   bool isRDP = false,
+  String? password,
 }) async {
   if (id == '') return;
   if (!isDesktop || desktopType == DesktopType.main) {
@@ -2022,13 +2025,12 @@ connect(
 
   if (isDesktop) {
     if (desktopType == DesktopType.main) {
-      await connectMainDesktop(
-        id,
-        isFileTransfer: isFileTransfer,
-        isTcpTunneling: isTcpTunneling,
-        isRDP: isRDP,
-        forceRelay: forceRelay,
-      );
+      await connectMainDesktop(id,
+          isFileTransfer: isFileTransfer,
+          isTcpTunneling: isTcpTunneling,
+          isRDP: isRDP,
+          forceRelay: forceRelay,
+          password: password);
     } else {
       await rustDeskWinManager.call(WindowType.Main, kWindowConnect, {
         'id': id,
